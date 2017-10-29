@@ -1,0 +1,98 @@
+---
+title: "Rozdzia≥ IV"
+author: "Radek"
+date: "26 paüdziernika 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Podstawowe biblioteki
+
+Poniøszy kod ≥aduje podstawowe biblioteki oraz zaczytuje dane.
+
+```{r include = FALSE}
+library(readxl)
+library(tidyr)
+library(dplyr)
+library(stargazer)
+library(ggplot2)
+library(reshape2)
+
+#te sπ do testowania normalnoúci rozk≥adu
+library(ggpubr)
+library(nortest)
+
+setwd("~/Studia/Moja praca/Rozdzia≥ IV")
+
+dane <- read_excel("~/Studia/Moja praca/Rozdzia≥ IV/ALL_DO R.xlsx", col_types = c("numeric", "text", "text", "text", "text", "text", "text", "text", "text", "numeric", "text", "text", "text", "text", "text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"), na = "n/a")
+
+#Jako øe wczytane zosta≥y wszystkie dane, naleøy wyselekcjonowaÊ tylko te formy prawne, ktÛre bÍdπ uøywane w badaniu. Pos≥uøymy sie funkcjπ FILTER z pakietu dplyr. Wczeúniej utworzymy wektor tekstowy traget form prawnych dopuszczonych do badania.
+
+target <- c("Jednoosobowa w≥asnoúÊ prywatna", "Oddzia≥ przedsiÍbiorcy zagranicznego","PrzedsiÍbiorstwo PaÒstwowe", "PrzedsiÍbiorstwo zagraniczne", "SpÛ≥dzielnia", "SpÛ≥ka akcyjna","SpÛ≥ka cywilna", "SpÛ≥ka jawna", "SpÛ≥ka komandytowa", "SpÛ≥ka komandytowo-akcyjna", "SpÛ≥ka z ograniczonπ odpowiedzialnoúciπ", "Towarzystwo ubezpieczeÒ wzajemnych")
+
+dane <- dane %>% filter(forma %in% target)
+```
+
+
+## Przeglπd danych
+
+
+```{r include = FALSE}
+dim(dane)
+
+dane_2016 <- dane %>%
+        select(16:46) %>%
+        filter(year == 2016)
+stargazer(as.data.frame(dane_2016), summary = TRUE, na.rm = TRUE, type = "html", out = "statystyki_2016.html", style = "aer")
+
+dane_2015 <- dane %>%
+        select(16:46) %>%
+        filter(year == 2015)
+stargazer(as.data.frame(dane_2015), summary = TRUE, na.rm = TRUE, type = "html", out = "statystyki_2015.html", style = "aer")
+
+dane_2014 <- dane %>%
+        select(16:46) %>%
+        filter(year == 2014)
+stargazer(as.data.frame(dane_2014), summary = TRUE, na.rm = TRUE, type = "html", out = "statystyki_2014.html", style = "aer")
+
+dane_2013 <- dane %>%
+        select(16:46) %>%
+        filter(year == 2013)
+stargazer(as.data.frame(dane_2013), summary = TRUE, na.rm = TRUE, type = "html", out = "statystyki_2013.html", style = "aer")
+
+dane_2012 <- dane %>%
+        select(16:46) %>%
+        filter(year == 2012)
+stargazer(as.data.frame(dane_2012), summary = TRUE, na.rm = TRUE, type = "html", out = "statystyki_2012.html", style = "aer")
+```
+
+##Wykresy - przeglπd danych
+```{r}
+#przychody
+
+przychody <- ggplot(dane_2015, aes(przychody_total)) +
+        geom_histogram(binwidth = 300) +
+        coord_cartesian(xlim = c(0, 2500)) 
+przychody
+
+#badamy normalnoúÊ rozk≥adu
+
+#wykres QQ
+ggqqplot(dane_2015$przychody_total)
+
+#Test Andersona-Darlinga. Ho - normalnoúÊ, H1-brak normalnoúci
+test_Andersona_Darlinga <- ad.test(dane_2015$przychody_total)
+test_Andersona_Darlinga
+
+```
+
+##Transformacje zmiennych
+
+Po przeprowadzeniu testy w R dla przedmiotowej zmiennej otrzymano wartoúÊ p-value mniejszπ niø 2.2e-16, tak wiÍÊ bliskπ zera. Oznacza to, øe naleøy odrzuciÊ hipotezÍ zerowπ na korzyúÊ hipotezy alternatywnej. W konsekwencji rozk≥ad zmiennej przychody_total nie jest rozk≥adem normalnym. 
+
+Naleøy dodaÊ, øe pozosta≥e zmienne charakteryzujπ siÍ podobnymi rozk≥adami. Jest to rzecz charakterystyczna dla danych finansowych. Tym samym, przed przystπpieniem do modelowania ekonometrycznego naleøy dokonaÊ transformacji danych.
+
+Po pierwsze naleøy dodaÊ 
