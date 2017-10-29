@@ -15,7 +15,7 @@ stargazer(as.data.frame(dane_2016), summary = TRUE, na.rm = TRUE, type = "html",
 
 
 ggplot(dane_2016, aes(dane_2016$przychody_total), na.rm=TRUE) + geom_histogram()
-
+ggplot(dane_2016, aes(dane_2016$przychody_total), na.rm=TRUE) + geom_denisty()
 
 
 
